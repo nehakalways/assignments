@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weather Cards</title>
+<style>
+  body{
+    font-family: Arial, sans-serif;
+    background:#f3f6fb;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:30px;
+  }
+
+  h1{
+    margin-bottom:20px;
+  }
+
+  #weather-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:20px;
+    width:100%;
+    max-width:700px;
+  }
+
+  .card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 6px 15px rgba(0,0,0,0.1);
+    text-align:center;
+  }
+
+  .temp{
+    font-size:32px;
+    font-weight:bold;
+    margin:10px 0;
+  }
+
+  .condition{
+    color:#555;
+  }
+
+  .emoji{
+    font-size:40px;
+  }
+
+  #loader{
+    border:6px solid #eee;
+    border-top:6px solid #3498db;
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    animation:spin 1s linear infinite;
+    margin:40px auto;
+  }
+
+  @keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+  }
+
+  #error{
+    color:red;
+    font-weight:bold;
+  }
+</style>
+</head>
+<body>
+
+<h1>Weather Dashboard</h1>
+
+<div id="loader"></div>
+<div id="error"></div>
+<div id="weather-container"></div>
+
+<script>
+const cities = [
+  { name: "London", lat: 51.5072, lon: -0.1276 },
+  { name: "New York", lat: 40.7128, lon: -74.0060 },
+  { name: "Tokyo", lat: 35.6762, lon: 139.6503 }
+];
+
+const container = document.getElementById("weather-container");
+const loader = document.getElementById("loader");
+const errorBox = document.getElementById("error");
+
+function weatherEmoji(code){
+  if(code === 0) return {text:"Clear Sky", emoji:"☀️"};
+  if(code <= 3) return {text:"Partly Cloudy", emoji:"⛅"};
+  if(code <= 48) return {text:"Fog", emoji:"🌫️"};
+  if(code <= 67) return {text:"Rain", emoji:"🌧️"};
+  if(code <= 77) return {text:"Snow", emoji:"❄️"};
+  if(code <= 99) return {text:"Storm", emoji:"⛈️"};
+  return {text:"Unknown", emoji:"❓"};
+}
+
+async function fetchWeather(){
+
+  loader.style.display = "block";
+
+  try{
+
+    const requests = cities.map(city =>
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current_weather=true`)
+        .then(res => res.json())
+    );
+
+    const results = await Promise.all(requests);
+
+    loader.style.display = "none";
+
+    results.forEach((data, index) => {
+
+      const weather = data.current_weather;
+      const info = weatherEmoji(weather.weathercode);
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <h2>${cities[index].name}</h2>
+        <div class="emoji">${info.emoji}</div>
+        <div class="temp">${weather.temperature}°C</div>
+        <div class="condition">${info.text}</div>
+      `;
+
+      container.appendChild(card);
+    });
+
+  }catch(err){
+    loader.style.display = "none";
+    errorBox.textContent = "⚠️ Failed to fetch weather data.";
+    console.error(err);
+  }
+}
+
+fetchWeather();
+</script>
+
+</body>
+</html>
