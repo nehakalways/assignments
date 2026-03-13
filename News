@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>News App</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#f4f6f8;
+margin:0;
+padding:0;
+text-align:center;
+}
+
+header{
+background:#1e88e5;
+color:white;
+padding:15px;
+}
+
+.controls{
+margin:20px;
+}
+
+select, button{
+padding:10px;
+font-size:16px;
+margin:5px;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+button{
+background:#1e88e5;
+color:white;
+cursor:pointer;
+border:none;
+}
+
+button:hover{
+background:#1565c0;
+}
+
+#newsContainer{
+width:85%;
+margin:auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+gap:20px;
+}
+
+.news-card{
+background:white;
+border-radius:8px;
+box-shadow:0 3px 8px rgba(0,0,0,0.2);
+overflow:hidden;
+text-align:left;
+padding:15px;
+}
+
+.news-card h3{
+margin-top:0;
+}
+
+.news-card a{
+color:#1e88e5;
+text-decoration:none;
+font-weight:bold;
+}
+
+.loading{
+font-size:20px;
+margin-top:30px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>📰 News Explorer</h1>
+</header>
+
+<div class="controls">
+
+<select id="topic">
+<option value="general">General</option>
+<option value="technology">Technology</option>
+<option value="business">Business</option>
+<option value="sports">Sports</option>
+<option value="health">Health</option>
+<option value="science">Science</option>
+<option value="entertainment">Entertainment</option>
+</select>
+
+<button onclick="getNews()">Get News</button>
+
+</div>
+
+<div id="newsContainer"></div>
+
+<script>
+
+async function getNews(){
+
+const topic = document.getElementById("topic").value;
+const container = document.getElementById("newsContainer");
+
+container.innerHTML = `<p class="loading">Loading news...</p>`;
+
+// Hacker News API
+const url = `https://hn.algolia.com/api/v1/search?query=${topic}`;
+
+try{
+
+const response = await fetch(url);
+const data = await response.json();
+
+container.innerHTML = "";
+
+if(data.hits.length === 0){
+container.innerHTML = "<p>No news found.</p>";
+return;
+}
+
+data.hits.forEach(article => {
+
+const card = document.createElement("div");
+card.className = "news-card";
+
+card.innerHTML = `
+
+<h3>${article.title || "No Title"}</h3>
+
+<p>Author: ${article.author}</p>
+
+<p><small>${new Date(article.created_at).toLocaleString()}</small></p>
+
+<a href="${article.url || '#'}" target="_blank">Read Article</a>
+
+`;
+
+container.appendChild(card);
+
+});
+
+}
+
+catch(error){
+
+container.innerHTML = "<p>Error loading news.</p>";
+
+}
+
+}
+
+// load default news on page start
+window.onload = getNews;
+
+</script>
+
+</body>
+</html>
